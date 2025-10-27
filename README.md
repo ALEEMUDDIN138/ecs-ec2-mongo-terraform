@@ -191,7 +191,3 @@ aws ecr delete-repository --repository-name ecs-node-mongo-app --force
 * [AWS ECS Developer Guide](https://docs.aws.amazon.com/ecs/latest/developerguide/)
 * [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 * [Docker + ECR Docs](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html)
-
----
-
-✅ **Next Step:** See `compare_ecs_ec2_vs_fargate.md` for detailed cost and scalability analysis.
