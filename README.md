@@ -1,71 +1,197 @@
-# ECS EC2 Node.js + MongoDB (Terraform)
+# 🚀 Node.js + MongoDB on AWS ECS (EC2) — Terraform Deployment
 
-This repo deploys a sample Node.js application to AWS ECS (EC2) with MongoDB backend and Terraform state in S3 with DynamoDB locking.
+This project demonstrates deploying a simple **Node.js REST API** connected to **MongoDB**, containerized with **Docker**, and deployed on **AWS ECS (EC2 launch type)** using **Terraform** with an S3 backend and DynamoDB for state locking.
 
-## Highlights
-- Terraform remote state in S3 with DynamoDB locking
-- Modular Terraform (vpc, ecr, ecs_cluster, ecs_asg, alb)
-- Node.js sample app that reads MongoDB connection string from env
-- Dockerfile to build container and push to ECR
-- ALB exposes app on port 80
+---
 
+## 📁 1. Project File Tree
 
-## Pre-requisites
-- AWS CLI configured with credentials
-- Terraform v1.3+ (compatible)
-- Docker
-- jq (helpful)
+```
+Ecs-ec2-mongo-terraform-repo/
+├─ compare_ecs_ec2_vs_fargate.md       # ECS EC2 vs Fargate comparison
+├─ README.md                           # This file
+│
+├─ app/                                # Node.js Application
+│  ├─ Dockerfile
+│  ├─ package.json
+│  └─ app.js
+│
+├─ terraform/
+│  ├─ backend/                         # Terraform backend (S3 + DynamoDB)
+│  │  ├─ main.tf
+│  │  └─ variables.tf
+│  │
+│  ├─ modules/                         # Terraform modules for reuse
+│  │  ├─ vpc/
+│  │  ├─ ecs/
+│  │  ├─ alb/
+│  │  ├─ ecr/
+│  │  └─ asg/
+│  │
+│  ├─ main.tf                          # Root module calling submodules
+│  ├─ provider.tf                      # AWS provider setup
+│  ├─ variables.tf
+│  └─ outputs.tf                       # ALB DNS, ECS cluster, service name
+│
+└─ .gitignore
+```
 
+---
 
-## 1) Bootstrap Terraform backend (run locally once)
+## ⚙️ 2. Configure Terraform Backend
+
+1. Create an S3 bucket and DynamoDB table for Terraform state:
+
+   ```bash
+   aws s3api create-bucket --bucket my-terraform-state-bucket --region ap-south-1
+   aws dynamodb create-table \
+     --table-name terraform-locks \
+     --attribute-definitions AttributeName=LockID,AttributeType=S \
+     --key-schema AttributeName=LockID,KeyType=HASH \
+     --billing-mode PAY_PER_REQUEST
+   ```
+
+2. Update your backend config in `terraform/backend/main.tf`:
+
+   ```hcl
+   terraform {
+     backend "s3" {
+       bucket         = "my-terraform-state-bucket"
+       key            = "ecs-nodejs/terraform.tfstate"
+       region         = "ap-south-1"
+       dynamodb_table = "terraform-locks"
+       encrypt        = true
+     }
+   }
+   ```
+
+3. Initialize Terraform:
+
+   ```bash
+   cd terraform
+   terraform init
+   ```
+
+---
+
+## 🐳 3. Build and Push Docker Image to ECR
+
+1. Create an ECR repository:
+
+   ```bash
+   aws ecr create-repository --repository-name ecs-node-mongo-app
+   ```
+
+2. Authenticate Docker with ECR:
+
+   ```bash
+   aws ecr get-login-password --region ap-south-1 | \
+   docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.ap-south-1.amazonaws.com
+   ```
+
+3. Build and push the image:
+
+   ```bash
+   docker build -t ecs-node-mongo-app:latest ./app
+   docker tag ecs-node-mongo-app:latest <aws_account_id>.dkr.ecr.ap-south-1.amazonaws.com/ecs-node-mongo-app:latest
+   docker push <aws_account_id>.dkr.ecr.ap-south-1.amazonaws.com/ecs-node-mongo-app:latest
+   ```
+
+---
+
+## ☁️ 4. Deploy Infrastructure with Terraform
+
+Run the following commands from the `terraform/` directory:
 
 ```bash
-cd bootstrap-backend
 terraform init
-terraform apply -var="bucket_name=your-tf-state-bucket-$(date +%s)" -var="dynamodb_table=tf-locks-$(date +%s)" -auto-approve
-This creates an S3 bucket and DynamoDB table for locking. Note the bucket name and table name.
+terraform plan
+terraform apply -auto-approve
+```
 
+**Terraform Outputs:**
 
-2) Configure terraform backend
-Edit terraform/backend.tf and set bucket and dynamodb_table to values created above (or set via environment variables/terraform.tfvars).
+* `alb_dns_name` → Application Load Balancer URL
+* `ecs_cluster_name` → ECS Cluster name
+* `service_name` → ECS Service name
 
-# 1. Create ECR repo (Terraform will create one, but you can create manually or run terraform apply first)
-# 2. Authenticate Docker to ECR
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
-Alternatively run terraform apply first which creates the ECR repo and then run the push steps using the repo URI output from Terraform.
+---
 
-3) Build and push Docker image to ECR
-# Build and tag (example tag: v1)
-docker build -t node-mongo-sample:latest ./app
-TAG=v1
-REPO_URI=$(aws ecr describe-repositories --repository-names node-mongo-sample --region us-east-1 --query 'repositories[0].repositoryUri' --output text)
-docker tag node-mongo-sample:latest ${REPO_URI}:${TAG}
-docker push ${REPO_URI}:${TAG}
+## 🔐 5. Environment Variables
 
+In your ECS Task Definition, Terraform passes the following environment variables to the container:
 
-4) Deploy infra with Terraform
-cd terraform
-# configure backend.tf variables or use -var-file
-terraform init
-terraform plan -out=tfplan
-terraform apply tfplan
+| Variable      | Description                                       |
+| ------------- | ------------------------------------------------- |
+| `MONGO_URI`   | MongoDB connection string (Atlas or self-managed) |
+| `PORT`        | Application port (default 3000)                   |
+| `ENVIRONMENT` | Deployment environment name (e.g., dev, prod)     |
 
+Example snippet from ECS task definition:
 
-5) Environment variables
-Set these variables in the ECS Task definition via Terraform (example in vars):
+```hcl
+environment = [
+  {
+    name  = "MONGO_URI"
+    value = "mongodb+srv://<username>:<password>@cluster.mongodb.net/mydb"
+  },
+  {
+    name  = "ENVIRONMENT"
+    value = var.environment
+  }
+]
+```
 
-MONGO_URI — MongoDB connection string (e.g., from Atlas or EC2-hosted Mongo)
+---
 
-NODE_ENV — environment name production
+## 🌐 6. Access the Application
 
-6) Access the app
+After successful deployment, Terraform outputs the ALB DNS name:
 
-Terraform outputs the ALB DNS name. Example:
-ALB DNS: ${alb_dns_name}
-Open in browser.
+```bash
+Outputs:
+alb_dns_name = "ecs-node-app-alb-123456789.ap-south-1.elb.amazonaws.com"
+```
 
-7) Cleanup
+Access your application in a browser:
+
+```
+http://ecs-node-app-alb-123456789.ap-south-1.elb.amazonaws.com/
+```
+
+Expected output:
+
+```json
+{
+  "message": "Hello from Node.js ECS App!",
+  "environment": "dev"
+}
+```
+
+---
+
+## 🧹 7. Cleanup
+
+To remove all resources and avoid AWS charges:
+
+```bash
 terraform destroy -auto-approve
-# and optionally destroy bootstrap resources
-cd ../bootstrap-backend
-terraform destroy -auto-approve
+```
+
+Also delete your ECR images if no longer needed:
+
+```bash
+aws ecr delete-repository --repository-name ecs-node-mongo-app --force
+```
+
+---
+
+### 📘 References
+
+* [AWS ECS Developer Guide](https://docs.aws.amazon.com/ecs/latest/developerguide/)
+* [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
+* [Docker + ECR Docs](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html)
+
+---
+
+✅ **Next Step:** See `compare_ecs_ec2_vs_fargate.md` for detailed cost and scalability analysis.
