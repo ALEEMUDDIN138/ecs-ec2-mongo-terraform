@@ -55,6 +55,7 @@ git clone <repository-url>
 cd terraform-ecs-nodejs-mongodb
 
 2. Set up MongoDB
+
 Option A: MongoDB Atlas (Recommended)
 Create a MongoDB Atlas account
 Create a cluster
