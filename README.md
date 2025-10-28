@@ -53,6 +53,7 @@ This project deploys a Node.js application with MongoDB backend on AWS ECS using
 ```bash
 git clone <repository-url>
 cd terraform-ecs-nodejs-mongodb
+
 2. Set up MongoDB
 Option A: MongoDB Atlas (Recommended)
 Create a MongoDB Atlas account
@@ -66,7 +67,6 @@ Terraform | HashiCorp Developer
 Explore Terraform product documentation, tutorials, and examples. (124 kB)
 https://variables.tf/
 
-7:28
 3. Build and Push Docker Image
 bash
 # Navigate to app directory
@@ -83,6 +83,7 @@ docker tag nodejs-mongodb-app:latest <account-id>.dkr.ecr.us-east-1.amazonaws.co
 
 # Push to ECR
 docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/nodejs-mongodb-app:latest
+
 4. Terraform Deployment
 Initialize Terraform
 bash
@@ -91,6 +92,7 @@ terraform init -backend-config="bucket=my-terraform-state-bucket" \
                -backend-config="key=ecs-nodejs-mongodb/terraform.tfstate" \
                -backend-config="region=us-east-1" \
                -backend-config="dynamodb_table=terraform-state-lock"
+
 Configure Variables
 bash
 # Copy example variables file
@@ -98,6 +100,7 @@ cp terraform.tfvars.example terraform.tfvars
 
 # Edit with your values
 vim terraform.tfvars
+
 Plan and Apply
 bash
 # Plan the deployment
@@ -105,10 +108,12 @@ terraform plan
 
 # Apply the configuration
 terraform apply
+
 5. Access the Application
 After deployment, get the ALB DNS name:
 bash
 terraform output alb_dns_name
+
 Access the application:
 Homepage: http://<alb-dns-name>
 Health check: http://<alb-dns-name>/health
@@ -122,12 +127,13 @@ Environment Variables
 MONGODB_URI - MongoDB connection string
 NODE_ENV - Environment (production/development)
 PORT - Application port (default: 3000)
+
 Clean Up
 bash
 terraform destroy
+
 Troubleshooting
 Check ECS service logs in CloudWatch
 Verify security group rules
 Check ALB target group health
 Verify MongoDB connectivity from ECS tasks
-
