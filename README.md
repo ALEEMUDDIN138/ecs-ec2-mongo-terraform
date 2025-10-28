@@ -8,32 +8,23 @@ This project demonstrates deploying a simple **Node.js REST API** connected to *
 
 ```
 Ecs-ec2-mongo-terraform-repo/
-├─ compare_ecs_ec2_vs_fargate.md       # ECS EC2 vs Fargate comparison
-├─ README.md                           # This file
-│
-├─ app/                                # Node.js Application
-│  ├─ Dockerfile
-│  ├─ package.json
-│  └─ app.js
-│
-├─ terraform/
-│  ├─ backend/                         # Terraform backend (S3 + DynamoDB)
-│  │  ├─ main.tf
-│  │  └─ variables.tf
-│  │
-│  ├─ modules/                         # Terraform modules for reuse
-│  │  ├─ vpc/
-│  │  ├─ ecs/
-│  │  ├─ alb/
-│  │  ├─ ecr/
-│  │  └─ asg/
-│  │
-│  ├─ main.tf                          # Root module calling submodules
-│  ├─ provider.tf                      # AWS provider setup
-│  ├─ variables.tf
-│  └─ outputs.tf                       # ALB DNS, ECS cluster, service name
-│
-└─ .gitignore
+terraform-ecs-nodejs-mongodb/
+├── app/
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── server.js
+│   └── .dockerignore
+├── modules/
+│   ├── networking/
+│   ├── ecs/
+│   ├── database/
+│   └── alb/
+├── main.tf
+├── variables.tf
+├── outputs.tf
+├── terraform.tfvars.example
+├── README.md
+└── ecs-comparison.md
 ```
 
 ---
