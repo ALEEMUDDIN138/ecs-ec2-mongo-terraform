@@ -1,0 +1,22 @@
+region = "us-east-1"
+project_name = "nodejs-mongodb-app"
+environment = "production"
+
+# S3 Backend Configuration
+s3_bucket_name = "my-terraform-state-bucket-12345"
+dynamodb_table_name = "terraform-state-lock"
+
+# MongoDB Configuration
+mongodb_username = "admin"
+mongodb_password = "your-secure-password"
+mongodb_host = "your-mongodb-cluster.mongodb.net"
+mongodb_database = "mydb"
+
+# ECS Configuration
+task_cpu = 256
+task_memory = 512
+desired_count = 2
+min_size = 1
+max_size = 3
+instance_type = "t3.small"
+key_name = "your-ec2-key-pair"
