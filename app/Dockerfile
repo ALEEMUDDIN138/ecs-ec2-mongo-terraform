@@ -1,12 +1,18 @@
-# Use official Node.js LTS image
 FROM node:18-alpine
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
+# Copy package files
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install --production
 
+# Copy application code
 COPY . .
 
-EXPOSE 3000
-CMD ["npm", "start"]
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nodejs -u 1001
+RUN chown -R nodejs:nodejs /app
+USER nodejs
