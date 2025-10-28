@@ -54,8 +54,6 @@ This project deploys a Node.js application with MongoDB backend on AWS ECS using
 git clone <repository-url>
 cd terraform-ecs-nodejs-mongodb
 
-## Setup Instructions
-
 ### 2. Set up MongoDB
 
 Option A: MongoDB Atlas (Recommended)
