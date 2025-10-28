@@ -24,6 +24,7 @@ terraform-ecs-nodejs-mongodb/
 ├── outputs.tf
 ├── terraform.tfvars.example
 ├── README.md
+|__ Terraform output.md
 └── ecs-comparison.md
 ```
 
