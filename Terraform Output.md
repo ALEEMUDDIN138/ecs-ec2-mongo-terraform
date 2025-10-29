@@ -10,8 +10,11 @@ Outputs: alb_dns_name = "nodejs-mongodb-aleem-alb-1469142445.us-east-1.elb.amazo
 ecr_repository_url = "548813916475.dkr.ecr.us-east-1.amazonaws.com/nodejs-mongodb-aleem"
 
 ecs_cluster_name = "nodejs-mongodb-aleem-cluster" 
+
 ecs_service_name = "nodejs-mongodb-aleem-service" 
-mongodb_secret_arn = <sensitive> 
+
+mongodb_secret_arn = <sensitive>
+
 vpc_id = "vpc-0398c0cd45f096766"
 
 
