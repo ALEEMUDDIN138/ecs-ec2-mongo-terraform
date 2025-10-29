@@ -20,8 +20,7 @@ vpc_id = "vpc-0398c0cd45f096766"
 
 You can then open your app using the ALB DNS name:
 
-http://ecs-node-alb-1234567890.ap-south-1.elb.amazonaws.com/
-
+http://nodejs-mongodb-aleem-alb-1469142445.us-east-1.elb.amazonaws.com
 
 Expected response:
 
