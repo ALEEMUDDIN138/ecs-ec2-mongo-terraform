@@ -22,9 +22,8 @@ You can then open your app using the ALB DNS name:
 
 http://nodejs-mongodb-aleem-alb-1469142445.us-east-1.elb.amazonaws.com
 
-Expected response:
+message reflects:
 
-{
-  "message": "Hello from Node.js ECS App!",
+ "Hello from Node.js ECS App!",
   "environment": "dev"
-}
+
