@@ -2,19 +2,15 @@
 
 After a successful deployment, you’ll see output values similar to the following:
 
-Outputs:
+Terraform has compared your real infrastructure against your configuration and found no differences, so no changes are needed. 
+Apply complete! Resources: 0 added, 0 changed, 0 destroyed. 
 
-alb_dns_name = "ecs-node-alb-1234567890.ap-south-1.elb.amazonaws.com"
-ecs_cluster_name = "ecs-node-cluster"
-ecs_service_name = "ecs-node-service"
-ecr_repository_url = "123456789012.dkr.ecr.ap-south-1.amazonaws.com/ecs-node-mongo-app"
-asg_name = "ecs-ec2-asg-nodeapp"
-ecs_service_sg_id = "sg-0a1b2c3d4e5f67890"
-vpc_id = "vpc-0123abcd4567efgh8"
-subnet_ids = [
-  "subnet-01a2b3c4d5e6f7a8b",
-  "subnet-02a2b3c4d5e6f7a8b"
-]
+Outputs: alb_dns_name = "nodejs-mongodb-aleem-alb-1469142445.us-east-1.elb.amazonaws.com" 
+ecr_repository_url = "548813916475.dkr.ecr.us-east-1.amazonaws.com/nodejs-mongodb-aleem" 
+ecs_cluster_name = "nodejs-mongodb-aleem-cluster" 
+ecs_service_name = "nodejs-mongodb-aleem-service" 
+mongodb_secret_arn = <sensitive> 
+vpc_id = "vpc-0398c0cd45f096766"
 
 
 You can then open your app using the ALB DNS name:
