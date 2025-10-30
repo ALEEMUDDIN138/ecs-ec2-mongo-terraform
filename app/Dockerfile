@@ -1,18 +1,24 @@
 FROM node:18-alpine
 
+# Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install --production
 
-# Copy application code
+# Copy the rest of the application code
 COPY . .
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
-RUN chown -R nodejs:nodejs /app
+# Expose application port
+EXPOSE 3000
+
+# Create non-root user for security
+RUN addgroup -g 1001 -S nodejs \
+  && adduser -S nodejs -u 1001 \
+  && chown -R nodejs:nodejs /app
+
 USER nodejs
+
+# Start the app
+CMD ["node", "server.js"]
