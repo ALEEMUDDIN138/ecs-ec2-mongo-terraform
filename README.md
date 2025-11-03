@@ -10,7 +10,7 @@ This project demonstrates deploying a simple **Node.js REST API** connected to *
 Ecs-ec2-mongo-terraform-repo/
 terraform-ecs-nodejs-mongodb/
 ├── app/
-│   ├── Dockerfile
+│   ├── app.js
 │   ├── package.json
 │   ├── server.js
 │   └── .dockerignore
@@ -22,6 +22,7 @@ terraform-ecs-nodejs-mongodb/
 ├── main.tf
 ├── variables.tf
 ├── outputs.tf
+├── Dockerfile
 ├── terraform.tfvars.example
 ├── README.md
 |__ Terraform output.md
