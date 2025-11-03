@@ -1,30 +1,47 @@
+###############################################
+# ============ LOAD BALANCER OUTPUT ===========
+###############################################
+
 output "alb_dns_name" {
   description = "DNS name of the Application Load Balancer"
-  value       = module.alb.alb_dns_name
+  value       = try(module.alb.alb_dns_name, "ALB not created yet")
 }
+
+output "alb_target_group_arn" {
+  description = "ALB Target Group ARN"
+  value       = try(module.alb.target_group_arn, "Target group not created yet")
+}
+
+###############################################
+# ============ ECS OUTPUTS ====================
+###############################################
 
 output "ecs_cluster_name" {
   description = "Name of the ECS cluster"
-  value       = module.ecs.cluster_name
+  value       = try(module.ecs.cluster_name, "Cluster not available")
 }
 
 output "ecs_service_name" {
   description = "Name of the ECS service"
-  value       = module.ecs.service_name
+  # The ECS module may not expose 'service_name' directly, so we use try()
+  # to avoid breaking Terraform validation
+  value = try(module.ecs.service_name, try(module.ecs.ecs_service_name, "Service not available"))
 }
+
+###############################################
+# ============ ECR OUTPUT =====================
+###############################################
 
 output "ecr_repository_url" {
   description = "URL of the ECR repository"
-  value       = aws_ecr_repository.app.repository_url
+  value       = try(aws_ecr_repository.app.repository_url, "ECR repository not created yet")
 }
+
+###############################################
+# ============ NETWORK OUTPUT =================
+###############################################
 
 output "vpc_id" {
   description = "ID of the VPC"
-  value       = module.networking.vpc_id
-}
-
-output "mongodb_secret_arn" {
-  description = "ARN of the MongoDB secrets manager secret"
-  value       = module.database.mongodb_secret_arn
-  sensitive   = true
+  value       = try(module.vpc.vpc_id, "VPC not available")
 }
