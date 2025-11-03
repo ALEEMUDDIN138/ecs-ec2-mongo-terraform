@@ -4,6 +4,6 @@ output "cluster_name" {
 }
 
 output "service_name" {
-  description = "Name of the ECS service"
-  value       = aws_ecs_service.main.name
+  description = "ECS Service Name (if available)"
+  value       = try(local.service_name, "not_created")
 }
