@@ -9,8 +9,7 @@ terraform {
   }
 
   backend "s3" {
-    # This will be filled in during terraform init
-    bucket         = "my-terraform-state-bucket"
+    bucket         = "aleem-terraform-state-us-east-1"
     key            = "ecs-nodejs-mongodb/terraform.tfstate"
     region         = "us-east-1"
     dynamodb_table = "terraform-state-lock"
@@ -22,7 +21,9 @@ provider "aws" {
   region = var.region
 }
 
-# S3 Bucket for Terraform State
+# ───────────────────────────────
+# Terraform Backend Resources
+# ───────────────────────────────
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.s3_bucket_name
 
@@ -49,7 +50,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
   }
 }
 
-# DynamoDB for State Locking
 resource "aws_dynamodb_table" "terraform_state_lock" {
   name           = var.dynamodb_table_name
   read_capacity  = 1
@@ -66,7 +66,9 @@ resource "aws_dynamodb_table" "terraform_state_lock" {
   }
 }
 
+# ───────────────────────────────
 # ECR Repository
+# ───────────────────────────────
 resource "aws_ecr_repository" "app" {
   name = var.project_name
 
@@ -79,55 +81,89 @@ resource "aws_ecr_repository" "app" {
   }
 }
 
-# Modules
-module "networking" {
-  source = "./modules/networking"
+# ───────────────────────────────
+# VPC Module (Remote Source)
+# ───────────────────────────────
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
 
-  project_name          = var.project_name
-  vpc_cidr             = var.vpc_cidr
-  public_subnet_cidrs  = var.public_subnet_cidrs
-  private_subnet_cidrs = var.private_subnet_cidrs
-  availability_zones   = var.availability_zones
+  name = var.project_name
+  cidr = var.vpc_cidr
+
+  azs             = var.availability_zones
+  public_subnets  = var.public_subnet_cidrs
+  private_subnets = var.private_subnet_cidrs
+
+  enable_nat_gateway = true
+  single_nat_gateway = true
+
+  tags = {
+    Project = var.project_name
+  }
 }
 
+# ───────────────────────────────
+# ALB Module
+# ───────────────────────────────
 module "alb" {
   source = "./modules/alb"
 
-  project_name         = var.project_name
-  vpc_id              = module.networking.vpc_id
-  public_subnet_ids   = module.networking.public_subnet_ids
-  alb_security_group_id = module.networking.alb_security_group_id
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnets
+  project_name      = var.project_name
 }
 
+# ───────────────────────────────
+# Database (MongoDB on EC2 or external)
+# ───────────────────────────────
 module "database" {
-  source = "./modules/database"
+  source  = "terraform-aws-modules/ec2-instance/aws"
+  version = "~> 5.0"
 
-  project_name     = var.project_name
-  mongodb_username = var.mongodb_username
-  mongodb_password = var.mongodb_password
-  mongodb_host     = var.mongodb_host
-  mongodb_database = var.mongodb_database
+  for_each = {
+    mongodb = {
+      name          = "${var.project_name}-mongodb"
+      ami           = var.mongodb_ami_id
+      instance_type = "t3.micro"
+      subnet_id     = element(module.vpc.private_subnets, 0)
+    }
+  }
+
+  name          = each.value.name
+  ami           = each.value.ami
+  instance_type = each.value.instance_type
+  subnet_id     = each.value.subnet_id
+
+  tags = {
+    Name = "MongoDB"
+  }
 }
 
+# ───────────────────────────────
+# ECS Cluster and Service
+# ───────────────────────────────
 module "ecs" {
   source = "./modules/ecs"
 
-  project_name        = var.project_name
-  region             = var.region
-  app_image          = "${aws_ecr_repository.app.repository_url}:latest"
-  vpc_id             = module.networking.vpc_id
-  private_subnet_ids = module.networking.private_subnet_ids
-  ecs_security_group_id = module.networking.ecs_security_group_id
-  alb_target_group_arn = module.alb.target_group_arn
-  alb_listener       = module.alb.listener
-
-  task_cpu    = var.task_cpu
-  task_memory = var.task_memory
-  desired_count = var.desired_count
-  min_size    = var.min_size
-  max_size    = var.max_size
-  instance_type = var.instance_type
-  key_name    = var.key_name
+  project_name          = var.project_name
+  region                = var.region
+  vpc_id                = module.vpc.vpc_id
+  private_subnet_ids    = module.vpc.private_subnets
+  public_subnet_ids     = module.vpc.public_subnets
+  ecs_security_group_id = module.vpc.default_security_group_id
+  alb_security_group_id = module.alb.alb_security_group_id
+  alb_target_group_arn  = module.alb.target_group_arn
+  alb_listener          = module.alb.listener_arn
+  desired_count         = var.desired_count
+  task_cpu              = var.task_cpu
+  task_memory           = var.task_memory
+  min_size              = var.min_size
+  max_size              = var.max_size
+  instance_type         = var.instance_type
+  key_name              = var.key_name
+  app_image             = "${aws_ecr_repository.app.repository_url}:latest"
+  ecs_optimized_ami     = var.ecs_optimized_ami
 
   container_environment = [
     {
@@ -143,21 +179,4 @@ module "ecs" {
       value = "3000"
     }
   ]
-
-  ecs_optimized_ami = data.aws_ami.ecs_optimized.id
-}
-
-data "aws_ami" "ecs_optimized" {
-  most_recent = true
-  owners      = ["amazon"]
-
-  filter {
-    name   = "name"
-    values = ["amzn2-ami-ecs-hvm-*-x86_64-ebs"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
 }
