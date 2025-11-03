@@ -4,13 +4,13 @@ environment = "production"
 
 # S3 Backend Configuration
 s3_bucket_name = "my-terraform-state-bucket-12345"
-dynamodb_table_name = "terraform-state-lock"
+dynamodb_table_name = "terraform-state-lock-aleem"
 
 # MongoDB Configuration
-mongodb_username = "admin"
-mongodb_password = "your-secure-password"
-mongodb_host = "your-mongodb-cluster.mongodb.net"
-mongodb_database = "mydb"
+mongodb_username = "sampleapp"
+mongodb_password = "admin@123"
+mongodb_host = "terraform-ecd--nodejs-m.d4odikf.mongodb.net"
+mongodb_database = "Terraform-ecd--nodejs-mangodb"
 
 # ECS Configuration
 task_cpu = 256
@@ -19,4 +19,4 @@ desired_count = 2
 min_size = 1
 max_size = 3
 instance_type = "t3.small"
-key_name = "terraform"
+key_name = "Virginia"
